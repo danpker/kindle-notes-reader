@@ -1,3 +1,5 @@
+use regex::Regex;
+
 struct Note {
     book: String,
     author: String,
@@ -7,19 +9,16 @@ struct Note {
 
 impl Note {
     fn from_raw_string(raw_note: &str) -> Note {
-        let mut lines = raw_note.split("\n").map(|&x| x.to_string()).collect::<Vec<String>>();
+        let mut lines: Vec<&str> = raw_note.split("\n").collect();
+        let re = Regex::new(r"(?P<title>.+)\((?P<author>.+)\)").unwrap();
+        let caps = re.captures(lines[0]).unwrap();
         Note {
-            book: get_book_title(lines.next().unwrap()),
-            author:
-            text: lines.nth(2).unwrap().to_string(),
+            book: caps["title"].trim().to_string(),
+            author: caps["author"].trim().to_string(),
+            text: lines.get(3).unwrap().to_string(),
             raw_note: raw_note.to_string(),
         }
     }
-}
-
-fn get_book_title(title_line: &str) -> String {
-    // For now this is a really dump implementation.
-    title_line.split("(").next().unwrap().trim().to_string()
 }
 
 #[cfg(test)]
