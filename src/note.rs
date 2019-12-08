@@ -8,8 +8,12 @@ struct Note {
 }
 
 impl Note {
+    /// Create a note from the raw string input.
+    ///
+    /// This is the part of the 'My Clippings.txt' file after each note has
+    /// been separated into individual notes.
     fn from_raw_string(raw_note: &str) -> Note {
-        let mut lines: Vec<&str> = raw_note.split("\n").collect();
+        let lines: Vec<&str> = raw_note.split("\n").collect();
         let re = Regex::new(r"(?P<title>.+)\((?P<author>.+)\)").unwrap();
         let caps = re.captures(lines[0]).unwrap();
         Note {
@@ -19,6 +23,16 @@ impl Note {
             raw_note: raw_note.to_string(),
         }
     }
+}
+
+/// Split the 'My Clippings.txt' text by the note separator and create a note
+/// for each note.
+fn create_notes_from_string(clippings_text: &str) -> Vec<Note> {
+    let mut output = Vec::new();
+    for line in clippings_text.split("========") {
+        output.push(Note::from_raw_string(line));
+    }
+    output
 }
 
 #[cfg(test)]
@@ -55,5 +69,21 @@ mod tests {
         let note = Note::from_raw_string(raw_note);
 
         assert_eq!(note.text, "I am the actual note.");
+    }
+
+    #[test]
+    fn test_creates_vec_of_notes_from_clipping_file() {
+        let clippings_text = "Title (Author)
+            Meta Data | Meta Data\n
+            I am the actual note
+            ========Title (Author)
+            Meta Data | Meta Data\n
+            I am the actual note
+            ========Title (Author)
+            Meta Data | Meta Data\n
+            I am the actual note";
+        let notes = create_notes_from_string(clippings_text);
+
+        assert_eq!(notes.len(), 3);
     }
 }
