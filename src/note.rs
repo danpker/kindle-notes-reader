@@ -13,12 +13,17 @@ impl Note {
     /// This is the part of the 'My Clippings.txt' file after each note has
     /// been separated into individual notes.
     fn from_raw_string(raw_note: &str) -> Note {
-        let lines: Vec<&str> = raw_note.split("\n").collect();
+        let lines: Vec<&str> = raw_note.trim().split("\n").collect();
         let re = Regex::new(r"(?P<title>.+)\((?P<author>.+)\)").unwrap();
-        let caps = re.captures(lines[0]).unwrap();
+
+        let book_info = match re.captures(lines[0]) {
+            Some(re_match) => re_match,
+            None => panic!(format!("Cannot find title and author in {}", lines[0])),
+        };
+
         Note {
-            book: caps["title"].trim().to_string(),
-            author: caps["author"].trim().to_string(),
+            book: book_info["title"].trim().to_string(),
+            author: book_info["author"].trim().to_string(),
             text: lines.get(3).unwrap().to_string(),
             raw_note: raw_note.to_string(),
         }
@@ -30,6 +35,7 @@ impl Note {
 fn create_notes_from_string(clippings_text: &str) -> Vec<Note> {
     let mut output = Vec::new();
     for line in clippings_text.split("========") {
+        dbg!(line);
         output.push(Note::from_raw_string(line));
     }
     output
@@ -74,14 +80,19 @@ mod tests {
     #[test]
     fn test_creates_vec_of_notes_from_clipping_file() {
         let clippings_text = "Title (Author)
-            Meta Data | Meta Data\n
-            I am the actual note
-            ========Title (Author)
-            Meta Data | Meta Data\n
-            I am the actual note
-            ========Title (Author)
-            Meta Data | Meta Data\n
-            I am the actual note";
+Meta Data | Meta Data
+
+I am the actual note
+========
+Title (Author)
+Meta Data | Meta Data
+
+I am the actual note
+========
+Title (Author)
+Meta Data | Meta Data
+
+I am the actual note";
         let notes = create_notes_from_string(clippings_text);
 
         assert_eq!(notes.len(), 3);
